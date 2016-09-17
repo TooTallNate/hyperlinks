@@ -9,8 +9,9 @@ Extension for [HyperTerm](https://hyperterm.org) that automatically links URLs.
 [Install HyperTerm](https://hyperterm.org/#installation) and add `hyperlinks` to
 the `plugins` array in `~/.hyperterm.js`.
 
-- focus on the HyperTerm window and `Ctrl + C` to abort opening url.
-- hold `Command` key and click a link to open it in your default browser.
+Hold ⌘ down on your keyboard and move the mouse over a URL or email address and a
+link will appear where your cursor is. Click a URL to open in a web browser, or
+click an email address to open in your mail client.
 
 ## Customizing styles
 
