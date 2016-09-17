@@ -6,24 +6,20 @@ Extension for [HyperTerm](https://hyperterm.org) that automatically links URLs.
 
 ## How to use
 
-[Install HyperTerm](https://hyperterm.org/#installation) and add `hyperlinks` to `plugins`
-in `~/.hyperterm.js`.
+[Install HyperTerm](https://hyperterm.org/#installation) and add `hyperlinks` to
+the `plugins` array in `~/.hyperterm.js`.
 
 - focus on the HyperTerm window and `Ctrl + C` to abort opening url.
 - hold `Command` key and click a link to open it in your default browser.
 
 ## Customizing styles
 
-Add cutome styles to `termCSS` in your `~/.hyperterm.js`.
+Add custom styles to `termCSS` in your `~/.hyperterm.js`.
 
 ```js
 termCSS: `
   x-screen a {
-    color: blue;
-  }
-
-  x-screen a.hover {
-    text-decoration: none;
+    color: pink;
   }
 `
 ```
