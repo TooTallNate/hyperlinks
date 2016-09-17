@@ -31,15 +31,14 @@ exports.decorateTerm = function (Term, { React }) {
       this.term = term;
       const { onTerminalReady } = term;
 
-      const self = this;
-      term.onTerminalReady = function () {
+      term.onTerminalReady = () => {
         onTerminalReady.apply(this, arguments);
 
         const screenNode = term.scrollPort_.getScreenNode();
-        screenNode.addEventListener('click', self.onLinkClick.bind(self));
-        screenNode.addEventListener('mousemove', self.onMouseMove.bind(self));
-        screenNode.addEventListener('keydown', self.onKeyDown.bind(self));
-        screenNode.addEventListener('keyup', self.onKeyUp.bind(self));
+        screenNode.addEventListener('click', this.onLinkClick.bind(this));
+        screenNode.addEventListener('mousemove', this.onMouseMove.bind(this));
+        screenNode.addEventListener('keydown', this.onKeyDown.bind(this));
+        screenNode.addEventListener('keyup', this.onKeyUp.bind(this));
       }
     }
 
