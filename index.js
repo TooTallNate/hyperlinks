@@ -5,7 +5,6 @@ const unwrapNode = require('unwrap-node');
 const rangeAtIndex = require('range-at-index');
 
 const urlRegex = require('./url-regex');
-const wordAtRange = require('./word-at-range');
 
 const META_KEY = 91;
 const urlRe = urlRegex();
@@ -78,19 +77,24 @@ exports.decorateTerm = function (Term, { React }) {
         return;
       }
 
-      const root = start.closest('x-row');
+      const row = start.closest('x-row');
 
-      if (start === root &&
-          (root.childNodes.length === 0 ||
-           (root.childNodes.length === 1 && root.firstChild.textContent === '')
+      if (start === row &&
+          (row.childNodes.length === 0 ||
+           (row.childNodes.length === 1 && row.firstChild.textContent === '')
           )
          ) {
         // empty row
         return;
       }
 
-      const range = wordAtRange(pointRange, root);
-      const text = range.toString();
+      // at this point, the user either will have a match for a new link, and thus
+      // any previous ones should be removed, or the user is moving the mouse while
+      // holding down the meta key, and we want to make sure to remove the link
+      // when they move the mouse off the link (i.e. no `match`)
+      this.removeLinks();
+
+      const text = row.innerText;
       let match = urlRe.exec(text);
 
       // reset the global index for the regexp
@@ -104,9 +108,9 @@ exports.decorateTerm = function (Term, { React }) {
       }
 
       if (match) {
-        const start = match.index;
-        const length = start + match[0].length;
-        const linkRange = rangeAtIndex(range.commonAncestorContainer, start, length);
+        const offset = match.index;
+        const length = offset + match[0].length;
+        const linkRange = rangeAtIndex(row, offset, length);
         const href = this.getAbsoluteUrl(match[0]);
 
         wrapRange(linkRange, () => {
@@ -115,11 +119,6 @@ exports.decorateTerm = function (Term, { React }) {
           a.dataset.hyperlink = true;
           return a;
         }, doc);
-      } else {
-        // if the user is moving the mouse while holding down the meta key,
-        // then make sure to remove the link when they move the mouse off the
-        // link
-        this.removeLinks();
       }
     }
 
