@@ -135,12 +135,14 @@ exports.decorateTerm = function (Term, { React }) {
     onKeyUp (e) {
       if (e.which !== META_KEY) return;
       this.metaKey = false;
+      this.term.document_.body.classList.remove('metaKey');
       this.removeLinks();
     }
 
     onKeyDown (e) {
       if (e.which !== META_KEY) return;
       this.metaKey = true;
+      this.term.document_.body.classList.add('metaKey');
       this.tryLink();
     }
 
@@ -157,5 +159,9 @@ exports.decorateTerm = function (Term, { React }) {
 const styles = `
   x-screen a {
     color: #0645ac;
+  }
+
+  .metaKey x-screen {
+    cursor: pointer;
   }
 `;
