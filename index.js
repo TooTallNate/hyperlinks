@@ -3,6 +3,7 @@ const emailRegex = require('email-regex');
 const wrapRange = require('wrap-range');
 const unwrapNode = require('unwrap-node');
 const rangeAtIndex = require('range-at-index');
+const boundingClientRect = require('bounding-client-rect');
 
 const urlRegex = require('./url-regex');
 
@@ -38,6 +39,7 @@ exports.decorateTerm = function (Term, { React }) {
         screenNode.addEventListener('mousemove', this.onMouseMove.bind(this));
         screenNode.addEventListener('keydown', this.onKeyDown.bind(this));
         screenNode.addEventListener('keyup', this.onKeyUp.bind(this));
+        screenNode.addEventListener('blur', this.onKeyUp.bind(this));
       }
     }
 
@@ -52,14 +54,26 @@ exports.decorateTerm = function (Term, { React }) {
       const el = e.target;
       if ('A' !== el.nodeName) return;
       e.preventDefault();
+      this.cleanup();
       shell.openExternal(el.href);
     }
 
     removeLinks () {
       const screenNode = this.term.scrollPort_.getScreenNode();
       const links = screenNode.querySelectorAll('a[data-hyperlink]');
+      const rows = new Set();
+
       for (const link of links) {
-        unwrapNode(link);
+        const range = unwrapNode(link);
+        let start = range.startContainer;
+        if (start.nodeType !== Node.ELEMENT_NODE) {
+          start = start.parentElement;
+        }
+        rows.add(start.closest('x-row'));
+      }
+
+      for (const row of rows) {
+        row.normalize();
       }
     }
 
@@ -94,23 +108,19 @@ exports.decorateTerm = function (Term, { React }) {
       // when they move the mouse off the link (i.e. no `match`)
       this.removeLinks();
 
-      const text = row.innerText;
-      let match = urlRe.exec(text);
+      let match;
+      const matches = this.getMatches(row.innerText);
 
-      // reset the global index for the regexp
-      urlRe.lastIndex = 0;
-
-      if (!match) {
-        match = emailRe.exec(text);
-
-        // reset the global index for the regexp
-        emailRe.lastIndex = 0;
-      }
-
-      if (match) {
+      for (match of matches) {
         const offset = match.index;
         const length = offset + match[0].length;
         const linkRange = rangeAtIndex(row, offset, length);
+
+        if (!rangeContains(linkRange, pointRange)) {
+          // pointer is not over the matching link, so bail…
+          continue;
+        }
+
         const href = this.getAbsoluteUrl(match[0]);
 
         wrapRange(linkRange, () => {
@@ -120,6 +130,27 @@ exports.decorateTerm = function (Term, { React }) {
           return a;
         }, doc);
       }
+    }
+
+    getMatches (text) {
+      let match;
+      const matches = [];
+
+      while (match = urlRe.exec(text)) {
+        matches.push(match);
+      }
+
+      // reset the global index for the regexp
+      urlRe.lastIndex = 0;
+
+      while (match = emailRe.exec(text)) {
+        matches.push(match);
+      }
+
+      // reset the global index for the regexp
+      emailRe.lastIndex = 0;
+
+      return matches;
     }
 
     onMouseMove (e) {
@@ -133,9 +164,7 @@ exports.decorateTerm = function (Term, { React }) {
 
     onKeyUp (e) {
       if (e.which !== META_KEY) return;
-      this.metaKey = false;
-      this.term.document_.body.classList.remove('metaKey');
-      this.removeLinks();
+      this.cleanup();
     }
 
     onKeyDown (e) {
@@ -143,6 +172,12 @@ exports.decorateTerm = function (Term, { React }) {
       this.metaKey = true;
       this.term.document_.body.classList.add('metaKey');
       this.tryLink();
+    }
+
+    cleanup() {
+      this.metaKey = false;
+      this.term.document_.body.classList.remove('metaKey');
+      this.removeLinks();
     }
 
     render () {
@@ -154,6 +189,15 @@ exports.decorateTerm = function (Term, { React }) {
     }
   };
 };
+
+function rangeContains (parentRange, sourceRange) {
+  const parent = boundingClientRect(parentRange);
+  const source = boundingClientRect(sourceRange);
+  return parent.top <= source.top
+      && parent.left <= source.left
+      && parent.bottom >= source.bottom
+      && parent.right > source.right;
+}
 
 const styles = `
   x-screen a {
