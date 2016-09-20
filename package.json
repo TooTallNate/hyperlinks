@@ -1,8 +1,8 @@
 {
-  "name": "hyperlinks",
-  "version": "0.2.1",
-  "description": "Extension for HyperTerm that automatically links URLs",
-  "repository": "https://github.com/zeit/hyperlinks",
+  "name": "hyperlinks2",
+  "version": "1.0.0",
+  "description": "Extension for HyperTerm that mimics iTerm2's Autolinking Behavior",
+  "repository": "https://github.com/TooTallNate/hyperlinks2",
   "keywords": [
     "hyperterm"
   ],
