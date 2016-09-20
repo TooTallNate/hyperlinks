@@ -10,6 +10,7 @@
     "bounding-client-rect": "^1.0.5",
     "email-regex": "1.0.0",
     "ip-regex": "1.0.3",
+    "opener": "1.4.1",
     "range-at-index": "1.0.4",
     "unwrap-node": "1.0.0",
     "url-regex": "3.2.0",

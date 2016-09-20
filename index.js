@@ -1,4 +1,5 @@
-const { shell } = require('electron');
+const path = require('path');
+const opener = require('opener');
 const emailRegex = require('email-regex');
 const wrapRange = require('wrap-range');
 const unwrapNode = require('unwrap-node');
@@ -6,6 +7,8 @@ const rangeAtIndex = require('range-at-index');
 const boundingClientRect = require('bounding-client-rect');
 
 const urlRegex = require('./url-regex');
+
+let cwd = '';
 
 const META_KEY = 91;
 const urlRe = urlRegex();
@@ -15,12 +18,11 @@ exports.decorateTerm = function (Term, { React }) {
   return class extends React.Component {
     constructor (props, context) {
       super(props, context);
-
-      this.onTerminal = this.onTerminal.bind(this);
       this.x = 0;
       this.y = 0;
       this.term = null;
       this.metaKey = false;
+      this.onTerminal = this.onTerminal.bind(this);
     }
 
     onTerminal (term) {
@@ -39,15 +41,30 @@ exports.decorateTerm = function (Term, { React }) {
         screenNode.addEventListener('mousemove', this.onMouseMove.bind(this));
         screenNode.addEventListener('keydown', this.onKeyDown.bind(this));
         screenNode.addEventListener('keyup', this.onKeyUp.bind(this));
-        screenNode.addEventListener('blur', this.onKeyUp.bind(this));
+        //screenNode.addEventListener('blur', this.cleanup.bind(this));
       }
     }
 
-    getAbsoluteUrl (url) {
-      if (/^[a-z]+:\/\//.test(url)) return url;
-      if (0 === url.indexOf('//')) return `http${url}`;
-      if (emailRe.test(url)) return `mailto:${url}`;
-      return `http://${url}`;
+    getAbsoluteUrl (match) {
+      const text = match[0];
+      switch (match.type) {
+        case 'email':
+          return `mailto:${text}`;
+        case 'url':
+          if (/^[a-z]+:\/\//.test(text)) {
+            return text;
+          } else {
+            return `http://${text}`;
+          }
+        case 'file':
+          let p = text.replace(/\~/g, process.env.HOME);
+          if (!path.isAbsolute(p)) {
+            p = path.join(cwd, p);
+          }
+          return `file://${p}`;
+        default:
+          throw new TypeError(`unexpected "type": ${type}`);
+      }
     }
 
     onLinkClick (e) {
@@ -55,7 +72,8 @@ exports.decorateTerm = function (Term, { React }) {
       if ('A' !== el.nodeName) return;
       e.preventDefault();
       this.cleanup();
-      shell.openExternal(el.href);
+      console.log(el);
+      opener(el.href);
     }
 
     removeLinks () {
@@ -108,10 +126,9 @@ exports.decorateTerm = function (Term, { React }) {
       // when they move the mouse off the link (i.e. no `match`)
       this.removeLinks();
 
-      let match;
       const matches = this.getMatches(row.innerText);
 
-      for (match of matches) {
+      for (const match of matches) {
         const offset = match.index;
         const length = offset + match[0].length;
         const linkRange = rangeAtIndex(row, offset, length);
@@ -121,21 +138,40 @@ exports.decorateTerm = function (Term, { React }) {
           continue;
         }
 
-        const href = this.getAbsoluteUrl(match[0]);
+        const href = this.getAbsoluteUrl(match);
 
         wrapRange(linkRange, () => {
           const a = doc.createElement('a');
           a.href = href;
           a.dataset.hyperlink = true;
+          a.dataset.type = match.type;
           return a;
         }, doc);
       }
     }
 
     getMatches (text) {
-      let match;
+      //console.log('getMatches: %o', text);
       const matches = [];
 
+      text.replace(/\S+/g, (word, offset) => {
+        let type;
+        if (emailRe.test(word)) {
+          type = 'email';
+        } else if (urlRe.test(word)) {
+          type = 'url';
+        } else if (/\~|\.|\//.test(word)) {
+          type = 'file';
+        }
+        if (type) {
+          const match = [ word ];
+          match.index = offset;
+          match.type = type;
+          matches.push(match);
+        }
+      });
+      console.log(matches);
+      /*
       while (match = urlRe.exec(text)) {
         matches.push(match);
       }
@@ -149,6 +185,7 @@ exports.decorateTerm = function (Term, { React }) {
 
       // reset the global index for the regexp
       emailRe.lastIndex = 0;
+      */
 
       return matches;
     }
@@ -188,6 +225,15 @@ exports.decorateTerm = function (Term, { React }) {
       return React.createElement(Term, props);
     }
   };
+};
+
+exports.middleware = (store) => (next) => (action) => {
+  switch (action.type) {
+    case 'SESSION_SET_CWD':
+      cwd = action.cwd;
+      break;
+  }
+  next(action);
 };
 
 function rangeContains (parentRange, sourceRange) {
