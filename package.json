@@ -1,7 +1,7 @@
 {
   "name": "hyperlinks2",
   "version": "1.0.0",
-  "description": "Extension for HyperTerm that mimics iTerm2's Autolinking Behavior",
+  "description": "Extension for HyperTerm that automatically links URLs while holding down the Meta key",
   "repository": "https://github.com/TooTallNate/hyperlinks2",
   "keywords": [
     "hyperterm"

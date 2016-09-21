@@ -1,12 +1,11 @@
-# hyperlinks
+# hyperlinks2
 
-Extension for [HyperTerm](https://hyperterm.org) that automatically links URLs.
-
-![Demo](https://cloud.githubusercontent.com/assets/775227/16933009/4fd309a0-4d85-11e6-99b5-720185f4b7d8.gif)
+Extension for [HyperTerm](https://hyperterm.org) that automatically links URLs
+while holding down the Meta key.
 
 ## How to use
 
-[Install HyperTerm](https://hyperterm.org/#installation) and add `hyperlinks` to
+[Install HyperTerm](https://hyperterm.org/#installation) and add `hyperlinks2` to
 the `plugins` array in `~/.hyperterm.js`.
 
 Hold the ⌘ key down on your keyboard and move the mouse over a URL or email
